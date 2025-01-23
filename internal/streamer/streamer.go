@@ -2,57 +2,70 @@ package streamer
 
 import (
 	"context"
+	"errors"
 	"log"
-	"sync"
+	"time"
+	"wats/internal/types"
 
-	"github.com/gorilla/websocket"
+	"github.com/adshao/go-binance/v2/futures"
 )
 
-type Streamer interface {
-	Start(wg *sync.WaitGroup)
+type Streamer struct {
+	ctx context.Context
+
+	channel *types.TraderChannel
 }
 
-type StreamerImpl struct {
-	context context.Context
-	url     string
-}
+func NewStreamer(ctx context.Context, ch *types.TraderChannel) *Streamer {
+	return &Streamer{
+		ctx: ctx,
 
-func NewStreamer(context context.Context, url string) *StreamerImpl {
-	return &StreamerImpl{
-		context: context,
-		url:     url,
+		channel: ch,
 	}
 }
 
-func (s *StreamerImpl) Start(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	// 1. WebSocket 연결
-	conn, _, err := websocket.DefaultDialer.Dial(s.url, nil)
-
+func (s *Streamer) Start() {
+	doneC, stopC, err := futures.WsAllMarkPriceServeWithRate(
+		1*time.Second,
+		s.handleServe,
+		s.handleError,
+	)
 	if err != nil {
-		log.Fatalf("Failed to connect: %v", err)
+		s.channel.Done <- errors.New("[streamer] failed to websocket connect")
+		return
 	}
 
-	defer conn.Close()
-	log.Println("Connected to:", s.url)
+	log.Println("[streamer] websoket connected successfully")
 
-	// 2. 메시지 수신 루프
-	for {
-		select {
-		case <-s.context.Done():
-			log.Printf("Streamer Context canceled. Exiting.")
-			conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			return
-		default:
-			_, message, err := conn.ReadMessage()
+	select {
+	case <-s.ctx.Done():
+		log.Println("[streamer] received stop signal, close websocket.")
+		close(stopC)
+		return
+	case <-doneC:
+		log.Println("[streamer] websoket closed by server.")
+		s.channel.Done <- nil
+		return
+	}
+}
 
-			if err != nil {
-				log.Printf("Streamer Read error: %v", err)
-				return
-			}
+func (s *Streamer) handleServe(events futures.WsAllMarkPriceEvent) {
+	// TODO: 임시 선언 > 추후 설정에서 불러오는 방식으로 수정
+	symbols := map[string]bool{
+		"TRUMPUSDT": true,
+	}
 
-			log.Println("message : ", message)
+	m := make(map[string]futures.WsMarkPriceEvent, 3)
+
+	for _, e := range events {
+		if symbols[e.Symbol] {
+			m[e.Symbol] = *e
 		}
 	}
+
+	s.channel.Stream <- m
+}
+
+func (s *Streamer) handleError(err error) {
+	log.Printf("[streamer] error: %v\n", err)
 }
