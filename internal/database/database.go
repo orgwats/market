@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"log"
-	"wats/internal/chart/candle"
+	"wats/internal/types"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -28,8 +28,8 @@ func NewDatabase() *Database {
 	return &Database{db: db}
 }
 
-// getCandles: Candle 데이터를 조회하고 배열로 반환
-func (d *Database) GetCandles(symbol string) ([]candle.Candle, error) {
+// GetCandles: Candle 데이터를 조회하고 배열로 반환
+func (d *Database) GetCandles(symbol string) []*types.Candle {
 	query := `
 		SELECT *
 		FROM candle
@@ -38,22 +38,25 @@ func (d *Database) GetCandles(symbol string) ([]candle.Candle, error) {
 		LIMIT 30;
 	`
 
+	var candles []*types.Candle
+
 	rows, err := d.db.Query(query, symbol)
 	if err != nil {
-		return nil, err
+		// 에러 처리 로직 추가 필요
+		return candles
 	}
 	defer rows.Close()
 
-	var candles []candle.Candle
 	for rows.Next() {
-		var candle candle.Candle
+		candle := &types.Candle{Closed: true}
 		err := rows.Scan(&candle.Symbol, &candle.OpenTime, &candle.Open, &candle.High, &candle.Low, &candle.Close, &candle.Volume, &candle.CloseTime, &candle.QuoteVolume, &candle.Count, &candle.TakerBuyVolume, &candle.TakerBuyQuoteVolume)
 		if err != nil {
-			return nil, err
+			// 에러 처리 로직 추가 필요
+			return candles
 		}
 		candles = append(candles, candle)
 	}
-	return candles, nil
+	return candles
 }
 
 func (d *Database) Close() {
