@@ -8,24 +8,35 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 )
 
-func NewStream(symbol string) chan *types.Candle {
-	ch := make(chan *types.Candle)
+func NewStream(symbol string) (ch chan *types.Candle, stop func()) {
+	ch = make(chan *types.Candle)
+	doneC, stopC := connectKlineWebsocket(symbol, ch)
 
 	go func() {
-		doneC, _, _ := futures.WsKlineServe(
-			symbol,
-			"1m",
-			func(event *futures.WsKlineEvent) {
-				ch <- parseEvent(event)
-			},
-			func(err error) {
-				log.Printf("[stream] error: %v\n", err)
-			},
-		)
 		<-doneC
+		close(ch)
 	}()
 
-	return ch
+	stop = func() {
+		close(stopC)
+	}
+
+	return ch, stop
+}
+
+func connectKlineWebsocket(symbol string, ch chan *types.Candle) (doneC, stopC chan struct{}) {
+	doneC, stopC, _ = futures.WsKlineServe(
+		symbol,
+		"1m",
+		func(event *futures.WsKlineEvent) {
+			ch <- parseEvent(event)
+		},
+		func(err error) {
+			log.Printf("WsKlineServe error: %v\n", err)
+		},
+	)
+
+	return doneC, stopC
 }
 
 func parseEvent(event *futures.WsKlineEvent) *types.Candle {
