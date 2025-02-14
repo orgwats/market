@@ -1,22 +1,57 @@
 package chart
 
 import (
+	"context"
 	"wats/internal/chart/candle"
 	"wats/internal/chart/indicators"
 	"wats/internal/database"
+	s "wats/internal/stream"
 )
 
 type Chart struct {
-	Candles    *candle.CandleBuffer
-	Indicators *indicators.Indicators
+	ctx    context.Context
+	symbol string
+
+	CandleBuffer *candle.CandleBuffer
+	Indicators   *indicators.Indicators
 }
 
-func NewChart(db *database.Database, symbol string) *Chart {
-	cb := candle.NewCandleBuffer(db, symbol)
-	i := indicators.NewIndicators(cb)
+func NewChart(ctx context.Context, db *database.Database, symbol string) *Chart {
+	c := &Chart{
+		ctx:    ctx,
+		symbol: symbol,
 
-	return &Chart{
-		Candles:    cb,
-		Indicators: i,
+		CandleBuffer: candle.NewCandleBuffer(30),
+		Indicators:   indicators.NewIndicators(),
+	}
+
+	cds := db.GetCandles(symbol)
+	c.CandleBuffer.Init(cds)
+
+	return c
+}
+
+func (c *Chart) Run() {
+	ch, stop := s.NewStream(c.symbol)
+
+	for {
+		select {
+		case cd, ok := <-ch:
+			if !ok {
+				return
+			}
+
+			if cd.Closed {
+				c.CandleBuffer.AddCandle(cd)
+				// TODO: DB INSERT 로직 필요
+			} else {
+				c.CandleBuffer.UpdateLastCandle(cd)
+			}
+
+			c.Indicators.Update(c.CandleBuffer.GetCandles())
+		case <-c.ctx.Done():
+			stop()
+			return
+		}
 	}
 }
