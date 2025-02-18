@@ -6,13 +6,14 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"wats/config"
+	"wats/internal/database"
 	"wats/internal/trader"
 )
 
 func main() {
-	c := config.LoadConfig()
-	t := trader.NewTrader(c)
+	// TODO: cfg 로직 수정 후 연결 필요
+	db := database.NewDatabase()
+	t := trader.NewTrader(db, "SUIUSDT")
 
 	go func() {
 		listenForSignals()
