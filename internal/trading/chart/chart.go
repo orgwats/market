@@ -2,10 +2,10 @@ package chart
 
 import (
 	"context"
-	"wats/internal/chart/candle"
-	"wats/internal/chart/indicators"
 	"wats/internal/database"
-	s "wats/internal/stream"
+	"wats/internal/trading/chart/candle"
+	"wats/internal/trading/chart/indicators"
+	stream "wats/internal/trading/stream"
 )
 
 type Chart struct {
@@ -32,7 +32,7 @@ func NewChart(ctx context.Context, db *database.Database, symbol string) *Chart 
 }
 
 func (c *Chart) Run() {
-	ch, stop := s.NewStream(c.symbol)
+	ch, stop := stream.NewStream(c.symbol)
 
 	for {
 		select {

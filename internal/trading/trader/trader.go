@@ -1,10 +1,10 @@
-package trader
+package trading
 
 import (
 	"context"
-	"wats/internal/analyzer"
-	"wats/internal/chart"
 	"wats/internal/database"
+	"wats/internal/trading/analyzer"
+	"wats/internal/trading/chart"
 )
 
 type Trader struct {

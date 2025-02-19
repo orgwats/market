@@ -1,4 +1,4 @@
-package streame
+package stream
 
 import (
 	"log"

@@ -2,7 +2,7 @@ package analyzer
 
 import (
 	"context"
-	"wats/internal/chart"
+	"wats/internal/trading/chart"
 )
 
 type Analyzer struct {
