@@ -59,6 +59,25 @@ func (d *Database) GetCandles(symbol string) []*types.Candle {
 	return candles
 }
 
+func (d *Database) GetLatestCandle(symbol string) *types.Candle {
+	query := `
+		SELECT *
+		FROM candle
+		WHERE symbol = ?
+		ORDER BY open_time DESC
+		LIMIT 1;
+	`
+
+	row := d.db.QueryRow(query, symbol)
+	candle := &types.Candle{Closed: true}
+	err := row.Scan(&candle.Symbol, &candle.OpenTime, &candle.Open, &candle.High, &candle.Low, &candle.Close, &candle.Volume, &candle.CloseTime, &candle.QuoteVolume, &candle.Count, &candle.TakerBuyVolume, &candle.TakerBuyQuoteVolume)
+	if err != nil {
+		return nil
+	}
+
+	return candle
+}
+
 func (d *Database) Close() {
 	d.db.Close()
 }
