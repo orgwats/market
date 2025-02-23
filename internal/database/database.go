@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"wats/internal/types"
 
@@ -14,7 +15,7 @@ type Database struct {
 
 func NewDatabase() *Database {
 	// TODO: 환경 변수로 이동
-	dsn := "root:123456@tcp(localhost:3306)/binance"
+	dsn := "root:123456@tcp(localhost:3306)/binance?allowAllFiles=true"
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -76,6 +77,25 @@ func (d *Database) GetLatestCandle(symbol string) *types.Candle {
 	}
 
 	return candle
+}
+
+func (d *Database) SaveCandlesFromCSV(symbol, filePath string) error {
+	query := fmt.Sprintf(`
+		LOAD DATA LOCAL INFILE './%s'
+		INTO TABLE candle
+		FIELDS TERMINATED BY ','
+		LINES TERMINATED BY '\n'
+		IGNORE 1 LINES
+		(open_time, open, high, low, close, volume, close_time, quote_volume, count, taker_buy_volume, taker_buy_quote_volume, @ignore)
+		SET symbol = '%s'
+	`, filePath, symbol)
+
+	_, err := d.db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *Database) Close() {
