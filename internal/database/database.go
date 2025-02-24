@@ -95,7 +95,57 @@ func (d *Database) SaveCandlesFromCSV(symbol, filePath string) error {
 		return err
 	}
 
+
+func (d *Database) SaveCandles(symbol string, cds []*types.Candle) error {
+	const batchSize = 1000
+	for start := 0; start < len(cds); start += batchSize {
+		end := start + batchSize
+		if end > len(cds) {
+			end = len(cds)
+		}
+		chunk := cds[start:end]
+		if err := d.bulkInsert(symbol, chunk); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (d *Database) bulkInsert(symbol string, chunk []*types.Candle) error {
+	var sb strings.Builder
+	sb.WriteString("INSERT INTO candle (symbol, open_time, open, high, low, close, volume, close_time, count, quote_volume, taker_buy_volume, taker_buy_quote_volume) VALUES ")
+
+	placeholders := make([]string, 0, len(chunk))
+	args := make([]interface{}, 0, len(chunk)*12)
+
+	for _, c := range chunk {
+		placeholders = append(placeholders, "(?,?,?,?,?,?,?,?,?,?,?,?)")
+		args = append(args,
+			symbol,
+			c.OpenTime,
+			c.Open,
+			c.High,
+			c.Low,
+			c.Close,
+			c.Volume,
+			c.CloseTime,
+			c.Count,
+			c.QuoteVolume,
+			c.TakerBuyVolume,
+			c.TakerBuyQuoteVolume,
+		)
+	}
+
+	sb.WriteString(strings.Join(placeholders, ","))
+	query := sb.String()
+
+	result, err := d.db.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	c, _ := result.RowsAffected()
+	log.Printf("bulkInsert 완료 : %d행 추가", c)
+	return err
 }
 
 func (d *Database) Close() {
