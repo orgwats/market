@@ -30,18 +30,21 @@ func NewDatabase() *Database {
 }
 
 // GetCandles: Candle 데이터를 조회하고 배열로 반환
-func (d *Database) GetCandles(symbol string) []*types.Candle {
+func (d *Database) GetCandles(symbol string, limit int) []*types.Candle {
 	query := `
-		SELECT *
-		FROM candle
-		WHERE symbol = ?
-		ORDER BY open_time DESC
-		LIMIT 30;
+		SELECT * FROM (
+				SELECT * 
+				FROM candle
+				WHERE symbol = ?
+				ORDER BY close_time DESC
+				LIMIT ?
+		) AS c
+		ORDER BY close_time ASC
 	`
 
 	var candles []*types.Candle
 
-	rows, err := d.db.Query(query, symbol)
+	rows, err := d.db.Query(query, symbol, limit)
 	if err != nil {
 		// 에러 처리 로직 추가 필요
 		return candles
@@ -65,7 +68,7 @@ func (d *Database) GetLatestCandle(symbol string) *types.Candle {
 		SELECT *
 		FROM candle
 		WHERE symbol = ?
-		ORDER BY open_time DESC
+		ORDER BY close_time DESC
 		LIMIT 1;
 	`
 

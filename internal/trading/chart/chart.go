@@ -25,7 +25,7 @@ func NewChart(ctx context.Context, db *database.Database, symbol string) *Chart 
 		Indicators:   indicators.NewIndicators(),
 	}
 
-	cds := db.GetCandles(symbol)
+	cds := db.GetCandles(symbol, 30)
 	c.CandleBuffer.Init(cds)
 
 	return c
