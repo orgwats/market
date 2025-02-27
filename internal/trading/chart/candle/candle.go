@@ -25,7 +25,12 @@ func (cb *CandleBuffer) Init(cds []*types.Candle) {
 }
 
 func (cb *CandleBuffer) GetCandles() []*types.Candle {
-	return cb.buf
+	cds := make([]*types.Candle, 0, cb.size)
+	for i := 0; i < cb.size; i++ {
+		idx := (cb.head + i) % cb.size
+		cds = append(cds, cb.buf[idx])
+	}
+	return cds
 }
 
 func (cb *CandleBuffer) AddCandle(c *types.Candle) {
