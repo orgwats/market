@@ -2,6 +2,7 @@ package chart
 
 import (
 	"context"
+	"sync"
 	"wats/internal/database"
 	"wats/internal/trading/chart/candle"
 	"wats/internal/trading/chart/indicators"
@@ -34,6 +35,7 @@ func NewChart(ctx context.Context, db *database.Database, symbol string) *Chart 
 func (c *Chart) Run() {
 	ch, stop := stream.NewStream(c.symbol)
 
+	var once sync.Once
 	for {
 		select {
 		case cd, ok := <-ch:
@@ -41,14 +43,17 @@ func (c *Chart) Run() {
 				return
 			}
 
+			once.Do(func() {
+				c.CandleBuffer.AddCandle(cd)
+			})
+
+			c.CandleBuffer.UpdateLastCandle(cd)
+			c.Indicators.Update(c.CandleBuffer.GetCandles())
+
 			if cd.Closed {
 				c.CandleBuffer.AddCandle(cd)
-				// TODO: DB INSERT 로직 필요
-			} else {
-				c.CandleBuffer.UpdateLastCandle(cd)
+				// DB INSERT
 			}
-
-			c.Indicators.Update(c.CandleBuffer.GetCandles())
 		case <-c.ctx.Done():
 			stop()
 			return
