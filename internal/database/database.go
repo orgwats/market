@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"wats/internal/types"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -93,11 +94,16 @@ func (d *Database) SaveCandlesFromCSV(symbol, filePath string) error {
 		SET symbol = '%s'
 	`, filePath, symbol)
 
-	_, err := d.db.Exec(query)
+	rst, err := d.db.Exec(query)
 	if err != nil {
 		return err
 	}
 
+	c, _ := rst.RowsAffected()
+	log.Printf("SaveCandlesFromCSV 완료 : %s 파일 / %d행 추가", filePath, c)
+
+	return nil
+}
 
 func (d *Database) SaveCandles(symbol string, cds []*types.Candle) error {
 	const batchSize = 1000
@@ -142,11 +148,11 @@ func (d *Database) bulkInsert(symbol string, chunk []*types.Candle) error {
 	sb.WriteString(strings.Join(placeholders, ","))
 	query := sb.String()
 
-	result, err := d.db.Exec(query, args...)
+	rst, err := d.db.Exec(query, args...)
 	if err != nil {
 		return err
 	}
-	c, _ := result.RowsAffected()
+	c, _ := rst.RowsAffected()
 	log.Printf("bulkInsert 완료 : %d행 추가", c)
 	return err
 }
