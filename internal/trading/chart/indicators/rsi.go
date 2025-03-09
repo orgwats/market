@@ -2,7 +2,6 @@ package indicators
 
 import (
 	"log"
-	"math"
 	"wats/internal/types"
 )
 
@@ -12,39 +11,35 @@ func CalculateRSI(candles []*types.Candle, period int) float64 {
 		return 0
 	}
 
-	var gains, losses float64
+	var gains, losses []float64
 
-	// 평균 상승/하락폭 계산
-	for i := 1; i < period; i++ {
+	for i := 1; i < len(candles); i++ {
 		diff := candles[i].Close - candles[i-1].Close
 		if diff > 0 {
-			gains += diff
+			gains = append(gains, diff)
+			losses = append(losses, 0)
 		} else {
-			losses -= -diff
+			gains = append(gains, 0)
+			losses = append(losses, -diff)
 		}
 	}
 
-	// 평균 값
-	avgGain := gains / float64(period)
-	avgLoss := losses / float64(period)
+	au := ComputeWellesWiderMA(gains, float64(period))
+	ad := ComputeWellesWiderMA(losses, float64(period))
 
-	for i := period; i < len(candles); i++ {
-		diff := candles[i].Close - candles[i-1].Close
-		if diff > 0 {
-			avgGain = ((avgGain * float64(period-1)) + diff) / float64(period)
-			avgLoss = ((avgLoss * float64(period-1)) + 0) / float64(period)
-		} else {
-			avgGain = ((avgGain * float64(period-1)) + 0) / float64(period)
-			avgLoss = ((avgLoss * float64(period-1)) - diff) / float64(period)
-		}
+	rs := au / ad
+
+	return (rs / (1 + rs)) * 100
+}
+
+func ComputeWellesWiderMA(prices []float64, period float64) float64 {
+	k := 1.0 / period
+	ma := make([]float64, len(prices))
+	ma[0] = prices[0]
+
+	for i := 1; i < len(prices); i++ {
+		ma[i] = (prices[i]*k + ma[i-1]*(1-k))
 	}
 
-	// RSI 계산
-	if avgLoss == 0 {
-		return 100
-	}
-	rs := avgGain / avgLoss
-	rsi := 100 - (100 / (1 + rs))
-
-	return math.Min(rsi, 100)
+	return ma[len(prices)-1]
 }
