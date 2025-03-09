@@ -22,11 +22,11 @@ func NewChart(ctx context.Context, db *database.Database, symbol string) *Chart 
 		ctx:    ctx,
 		symbol: symbol,
 
-		CandleBuffer: candle.NewCandleBuffer(30),
+		CandleBuffer: candle.NewCandleBuffer(200),
 		Indicators:   indicators.NewIndicators(),
 	}
 
-	cds := db.GetCandles(symbol, 30)
+	cds := db.GetCandles(symbol, 200)
 	c.CandleBuffer.Init(cds)
 
 	return c
