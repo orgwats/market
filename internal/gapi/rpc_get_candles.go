@@ -3,7 +3,8 @@ package gapi
 import (
 	"context"
 	"log"
-	db "wats/internal/db/sqlc"
+
+	db "github.com/orgwats/stream/internal/db/sqlc"
 
 	pb "github.com/orgwats/idl/gen/go/market"
 )

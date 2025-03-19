@@ -5,9 +5,10 @@ import (
 	"log"
 	"net"
 	"sync"
-	"wats/internal/config"
-	db "wats/internal/db/sqlc"
-	"wats/internal/gapi"
+
+	"github.com/orgwats/stream/internal/config"
+	db "github.com/orgwats/stream/internal/db/sqlc"
+	"github.com/orgwats/stream/internal/gapi"
 
 	_ "github.com/go-sql-driver/mysql"
 	pb "github.com/orgwats/idl/gen/go/market"

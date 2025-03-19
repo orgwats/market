@@ -1,10 +1,10 @@
 package gapi
 
 import (
-	"wats/internal/config"
-	db "wats/internal/db/sqlc"
-	"wats/internal/hub"
-	"wats/internal/stream"
+	"github.com/orgwats/stream/internal/config"
+	db "github.com/orgwats/stream/internal/db/sqlc"
+	"github.com/orgwats/stream/internal/hub"
+	"github.com/orgwats/stream/internal/stream"
 
 	pb "github.com/orgwats/idl/gen/go/market"
 )

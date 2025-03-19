@@ -2,7 +2,8 @@ package stream
 
 import (
 	"log"
-	"wats/internal/config"
+
+	"github.com/orgwats/stream/internal/config"
 
 	"github.com/adshao/go-binance/v2/futures"
 	pb "github.com/orgwats/idl/gen/go/market"
