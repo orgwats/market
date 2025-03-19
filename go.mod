@@ -1,4 +1,4 @@
-module wats
+module github.com/orgwats/stream
 
 go 1.23.4
 
