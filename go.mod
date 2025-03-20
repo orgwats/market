@@ -6,7 +6,7 @@ require (
 	github.com/adshao/go-binance/v2 v2.7.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
-	github.com/orgwats/idl v0.0.5
+	github.com/orgwats/idl v0.0.6
 	google.golang.org/grpc v1.71.0
 )
 
