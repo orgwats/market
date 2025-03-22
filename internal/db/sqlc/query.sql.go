@@ -14,10 +14,10 @@ SELECT symbol, open_time, open, high, low, close, volume, close_time, quote_volu
   SELECT symbol, open_time, open, high, low, close, volume, close_time, quote_volume, count, taker_buy_volume, taker_buy_quote_volume 
   FROM candles
   WHERE symbol = ?
-  ORDER BY close_time DESC
+  ORDER BY open_time DESC
   LIMIT ?
 ) AS c
-ORDER BY close_time ASC
+ORDER BY open_time ASC
 `
 
 type GetCandlesParams struct {
@@ -65,7 +65,7 @@ const getLatestCandle = `-- name: GetLatestCandle :one
 SELECT symbol, open_time, open, high, low, close, volume, close_time, quote_volume, count, taker_buy_volume, taker_buy_quote_volume
 FROM candles
 WHERE symbol = ?
-ORDER BY close_time DESC
+ORDER BY open_time DESC
 LIMIT 1
 `
 
