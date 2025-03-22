@@ -20,7 +20,7 @@ INSERT INTO candles (
 SELECT *
 FROM candles
 WHERE symbol = ?
-ORDER BY close_time DESC
+ORDER BY open_time DESC
 LIMIT 1;
 
 -- name: GetCandles :many
@@ -28,7 +28,7 @@ SELECT * FROM (
   SELECT * 
   FROM candles
   WHERE symbol = ?
-  ORDER BY close_time DESC
+  ORDER BY open_time DESC
   LIMIT ?
 ) AS c
-ORDER BY close_time ASC
+ORDER BY open_time ASC

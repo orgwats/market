@@ -11,6 +11,5 @@ CREATE TABLE `candles` (
   `count` bigint NOT NULL,
   `taker_buy_volume` decimal(18,8) NOT NULL,
   `taker_buy_quote_volume` decimal(18,8) NOT NULL,
-  `closed` boolean NOT NULL,
   PRIMARY KEY (`symbol`,`open_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
