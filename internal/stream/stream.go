@@ -9,32 +9,41 @@ import (
 	pb "github.com/orgwats/idl/gen/go/market"
 )
 
-func NewStream(cfg *config.Config) (ch chan *pb.Candle) {
-	ch = make(chan *pb.Candle)
-	doneC, _ := connectKlineWebsocket(cfg.Symbols, ch)
+type Stream struct {
+	Ch   chan *pb.Candle
+	Stop func()
+}
+
+func NewStream(cfg *config.Config) (*Stream, error) {
+	ch := make(chan *pb.Candle)
+	doneC, stopC, err := connectKlineWebsocket(cfg.Symbols, ch)
+	if err != nil {
+		return nil, err
+	}
+
+	stream := &Stream{
+		Ch: ch,
+		Stop: func() {
+			close(stopC)
+		},
+	}
 
 	go func() {
 		<-doneC
 		close(ch)
 	}()
 
-	// TODO: 추가 필요
-	// stop = func() {
-	// 	close(stopC)
-	// }
-
-	return ch
+	return stream, err
 }
 
-func connectKlineWebsocket(symbols []string, ch chan *pb.Candle) (doneC, stopC chan struct{}) {
-	log.Println(symbols)
+func connectKlineWebsocket(symbols []string, ch chan *pb.Candle) (doneC, stopC chan struct{}, err error) {
 	symbolIntervalPair := make(map[string]string)
 
 	for _, symbol := range symbols {
 		symbolIntervalPair[symbol] = "1m"
 	}
 
-	doneC, stopC, _ = futures.WsCombinedKlineServe(
+	doneC, stopC, err = futures.WsCombinedKlineServe(
 		symbolIntervalPair,
 		func(event *futures.WsKlineEvent) {
 			ch <- parseEvent(event)
@@ -43,8 +52,11 @@ func connectKlineWebsocket(symbols []string, ch chan *pb.Candle) (doneC, stopC c
 			log.Printf("WsKlineServe error: %v\n", err)
 		},
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return doneC, stopC
+	return doneC, stopC, nil
 }
 
 func parseEvent(event *futures.WsKlineEvent) *pb.Candle {
