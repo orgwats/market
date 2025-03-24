@@ -1,4 +1,4 @@
-module github.com/orgwats/stream
+module github.com/orgwats/market
 
 go 1.23.4
 
