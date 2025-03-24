@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
-	"github.com/orgwats/stream/internal/config"
-	db "github.com/orgwats/stream/internal/db/sqlc"
-	"github.com/orgwats/stream/internal/hub"
-	"github.com/orgwats/stream/internal/stream"
+	"github.com/orgwats/market/internal/config"
+	db "github.com/orgwats/market/internal/db/sqlc"
+	"github.com/orgwats/market/internal/hub"
+	"github.com/orgwats/market/internal/stream"
 
 	pb "github.com/orgwats/idl/gen/go/market"
 )

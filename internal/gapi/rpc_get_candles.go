@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	db "github.com/orgwats/stream/internal/db/sqlc"
+	db "github.com/orgwats/market/internal/db/sqlc"
 
 	pb "github.com/orgwats/idl/gen/go/market"
 )

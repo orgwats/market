@@ -6,9 +6,9 @@ import (
 	"net"
 	"sync"
 
-	"github.com/orgwats/stream/internal/config"
-	db "github.com/orgwats/stream/internal/db/sqlc"
-	"github.com/orgwats/stream/internal/gapi"
+	"github.com/orgwats/market/internal/config"
+	db "github.com/orgwats/market/internal/db/sqlc"
+	"github.com/orgwats/market/internal/gapi"
 
 	_ "github.com/go-sql-driver/mysql"
 	pb "github.com/orgwats/idl/gen/go/market"
