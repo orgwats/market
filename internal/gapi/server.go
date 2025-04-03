@@ -117,7 +117,18 @@ func (s *Server) sync() error {
 					// 예외 처리 필요
 				}
 			} else {
-				svc.StartTime(lastestCandle.OpenTime + 1)
+				t := time.Unix(
+					lastestCandle.CloseTime/1000,
+					(lastestCandle.CloseTime%1000)*int64(time.Millisecond),
+				)
+				now := time.Now()
+
+				diff := now.Sub(t)
+				minutes := diff.Minutes()
+
+				if minutes < 200 {
+					svc.StartTime(lastestCandle.OpenTime + 1)
+				}
 			}
 
 			klines, err := svc.Do(ctx)
