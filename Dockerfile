@@ -4,6 +4,8 @@ WORKDIR /app
 COPY . .
 RUN go build ./cmd/main.go
 
+RUN mkdir -p /logs && chmod 755 /logs
+
 # Run stage
 FROM alpine:3.21
 WORKDIR /app
