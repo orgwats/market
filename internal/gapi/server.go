@@ -4,7 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
+	"fmt"
+	"io"
+	"log/slog"
+	"os"
 	"sync"
 	"time"
 
@@ -27,9 +30,24 @@ type Server struct {
 	binanceClient *futures.Client
 	stream        *stream.Stream
 	hub           *hub.Hub
+
+	logger  *slog.Logger
+	logFile *os.File
 }
 
 func NewServer(cfg *config.Config, store db.Store) *Server {
+	// 1) 로그 파일 열기 (디렉터리가 미리 만들어져 있어야 합니다)
+	logFile, err := os.OpenFile(
+		"../logs/app.log",
+		os.O_RDWR|os.O_CREATE|os.O_APPEND,
+		0644,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// 4) 로거 생성
+	logger := slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stdout, logFile), nil))
 	hub := hub.NewHub()
 	client := futures.NewClient(cfg.BinanceApiKey, cfg.BinanceSecretKey)
 
@@ -38,23 +56,27 @@ func NewServer(cfg *config.Config, store db.Store) *Server {
 		store:         store,
 		binanceClient: client,
 		hub:           hub,
+		logger:        logger,
+		logFile:       logFile,
 	}
 }
 
 func (s *Server) Run() {
 	err := s.sync()
 	if err != nil {
-		log.Fatal("cannot sync candle data:", err)
+		s.logger.Error(fmt.Sprintf("Sync Candle Failed. : %v", err))
 	}
 
 	stream, err := stream.NewStream(s.cfg)
 	if err != nil {
-		log.Fatal("cannot create stream:", err)
+		s.logger.Error(fmt.Sprintf("Create Stream Failed. : %v", err))
 	}
 
 	s.stream = stream
 
 	ch := make(chan *pb.Candle)
+
+	s.logger.Info("Market Service Started.")
 
 	go func() {
 		for c := range s.stream.Ch {
@@ -86,12 +108,14 @@ func (s *Server) Run() {
 			if err != nil {
 				// 필요에 따라 재시도 로직
 			}
+			s.logger.Info(fmt.Sprintf("Candle Saved. : %s", c.Symbol))
 			cancel()
 		}
 	}()
 }
 
 func (s *Server) Stop() {
+	s.logFile.Close()
 	s.stream.Stop()
 }
 
@@ -172,7 +196,7 @@ func (s *Server) sync() error {
 		return err
 	}
 
-	log.Printf("SYNCED!!! : %d Rows", len(candles))
+	s.logger.Info(fmt.Sprintf("Candle Synced. : %d Rows", len(candles)))
 
 	return nil
 }
