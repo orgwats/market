@@ -23,7 +23,6 @@ import (
 type Server struct {
 	pb.UnimplementedMarketServer
 
-	// TODO: 임시
 	cfg   *config.Config
 	store db.Store
 
@@ -36,7 +35,6 @@ type Server struct {
 }
 
 func NewServer(cfg *config.Config, store db.Store) *Server {
-	// 1) 로그 파일 열기 (디렉터리가 미리 만들어져 있어야 합니다)
 	logFile, err := os.OpenFile(
 		"../logs/app.log",
 		os.O_RDWR|os.O_CREATE|os.O_APPEND,
@@ -46,10 +44,9 @@ func NewServer(cfg *config.Config, store db.Store) *Server {
 		panic(err)
 	}
 
-	// 4) 로거 생성
 	logger := slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stdout, logFile), nil))
 	hub := hub.NewHub()
-	client := futures.NewClient(cfg.BinanceApiKey, cfg.BinanceSecretKey)
+	client := futures.NewClient(cfg.Service.Market.BinanceApiKey, cfg.Service.Market.BinanceSecretKey)
 
 	return &Server{
 		cfg:           cfg,
@@ -128,7 +125,7 @@ func (s *Server) sync() error {
 	ch := make(chan db.Candle)
 
 	var wg sync.WaitGroup
-	for _, symbol := range s.cfg.Symbols {
+	for _, symbol := range s.cfg.Service.Market.Symbols {
 		wg.Add(1)
 		go func(service futures.KlinesService, symbol string) {
 			defer wg.Done()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -16,13 +17,13 @@ import (
 )
 
 func main() {
-	// TODO 임시
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("cannot load config:", err)
 	}
 
-	conn, err := sql.Open(cfg.DBDriver, cfg.DBSource)
+	dbCfg := cfg.Service.Market.Database
+	conn, err := sql.Open(dbCfg.Type, dbCfg.DSN())
 	if err != nil {
 		log.Fatal("cannot connect db:", err)
 	}
@@ -34,7 +35,7 @@ func main() {
 
 	pb.RegisterMarketServer(grpcServer, server)
 
-	listener, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.Service.Market.Port))
 	if err != nil {
 		log.Fatal("cannot listen network address:", err)
 	}

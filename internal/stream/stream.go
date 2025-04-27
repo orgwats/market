@@ -16,7 +16,7 @@ type Stream struct {
 
 func NewStream(cfg *config.Config) (*Stream, error) {
 	ch := make(chan *pb.Candle)
-	doneC, stopC, err := connectKlineWebsocket(cfg.Symbols, ch)
+	doneC, stopC, err := connectKlineWebsocket(cfg.Service.Market.Symbols, ch)
 	if err != nil {
 		return nil, err
 	}
